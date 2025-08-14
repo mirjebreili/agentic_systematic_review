@@ -1,1 +1,14 @@
+# Minimal dependencies
+ollama
+pypdf
+PyYAML
+pandas
+openpyxl
 
+# Optional dependencies
+pymupdf
+regex
+ocrmypdf
+pytesseract
+typer
+pydantic

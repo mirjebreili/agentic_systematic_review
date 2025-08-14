@@ -1,1 +1,20 @@
+extraction_features:
+  - feature_name: "Participant Count"
+    type: integer
+    units: persons
+    description: "Total number of human participants analyzed (prefer analyzed over enrolled)."
+    regex_hints: ["\\bN\\s*=\\s*(\\d+)", "\\b(\\d+)\\s+(participants|subjects)\\b"]
+    decision_rules:
+      - "Prefer 'analyzed' over 'enrolled'."
+      - "If multiple arms, sum arms unless the study reports per-arm only."
 
+  - feature_name: "Intervention Type"
+    type: category
+    allowed_values: ["TMS","tDCS","Drug","Placebo/Sham","CBT","Exercise","Other"]
+    description: "Primary intervention administered."
+
+  - feature_name: "Primary Outcome"
+    type: string
+    description: "Name of the primary outcome measure."
+
+  - feature_name: "Country of Study"

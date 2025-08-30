@@ -1,0 +1,27 @@
+[project]
+name = "LocalAgent-SR"
+version = "0.1.0"
+description = "A multi-agent systematic review tool powered by local LLMs."
+authors = [{ name = "Jules", email = "jules@example.com" }]
+requires-python = ">=3.11"
+
+[project.scripts]
+sr = "src.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.dependencies]
+# Using a string instead of a list for TOML compliance
+dependencies = [
+    "langgraph",
+    "ollama",
+    "pydantic",
+    "typer[all]",
+    "PyMuPDF",
+    "python-docx",
+    "beautifulsoup4",
+    "pytesseract",
+    "pandas",
+    "openpyxl"
+]

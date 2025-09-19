@@ -1,0 +1,17 @@
+inclusion_criteria:
+  - id: "is_rct"
+    criterion: "Randomized Controlled Trial (RCT)."
+    description: "Explicit mention of 'randomized controlled trial', 'randomized', 'randomly assigned', or 'random allocation'."
+  - id: "human_subjects"
+    criterion: "Human subjects."
+    description: "Methods state that participants were humans."
+  - id: "published_2021_plus"
+    criterion: "Published in or after 2021."
+    description: "Publication date in the paper is 2021 or later."
+
+exclude_criteria:
+  - id: "non_english"
+    criterion: "Non-English full text."
+  - id: "non_human_or_in_vitro"
+    criterion: "Animal or in vitro only."
+notes:

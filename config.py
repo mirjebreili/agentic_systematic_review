@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     temperature: float = 0.1
 
     # Paths
+    papers_folder: Path = Path("./papers")  # Default papers folder
+    fields_config_file: Path = Path("./fields_config.yaml")  # YAML config file path
     pdf_directory: Path = Path("./data/pdfs")
     features_file: Path = Path("./data/features.xlsx")
     results_file: Path = Path("./data/results.xlsx")

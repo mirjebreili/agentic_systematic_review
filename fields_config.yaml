@@ -1,0 +1,8 @@
+- field_name: "Authors"
+  description: "List of all authors, exactly as written on the first page."
+
+- field_name: "Country"
+  description: "The country or countries where the research was conducted, based on author affiliations."
+
+- field_name: "Publication Year"
+  description: "The year the paper was published."

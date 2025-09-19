@@ -2,7 +2,7 @@
 Manage ChromaDB collections and embeddings for each paper.
 """
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
 from typing import List
 from langchain_core.documents import Document
@@ -15,18 +15,33 @@ from pdf_processor import PDFProcessor
 logger = logging.getLogger(__name__)
 
 class EmbeddingManager:
-    def __init__(self, chroma_db_path: str, embedding_model: str, pdf_processor: PDFProcessor):
+    def __init__(self, chroma_db_path: Path, embedding_model_name: str, pdf_processor: PDFProcessor):
         """Initialize embedding model and ChromaDB client."""
-        self.chroma_db_path = str(Path(chroma_db_path).resolve())
-        self.embedding_model_name = embedding_model
+        self.chroma_db_path = str(chroma_db_path.resolve())
+        self.embedding_model_name = embedding_model_name
         self.pdf_processor = pdf_processor
 
-        logger.info(f"Initializing embedding model: {self.embedding_model_name}")
-        self.embedding_function = HuggingFaceEmbeddings(
-            model_name=self.embedding_model_name,
-            model_kwargs={'device': 'cpu'}, # Explicitly use CPU
-            encode_kwargs={'normalize_embeddings': True}
-        )
+        chroma_db_path.mkdir(parents=True, exist_ok=True)
+
+        logger.info(f"Initializing Ollama embedding model: {embedding_model_name}")
+
+        try:
+            self.embedding_function = OllamaEmbeddings(
+                base_url="http://localhost:11434",  # Default Ollama URL
+                model=self.embedding_model_name,
+                show_progress=True,
+            )
+
+            # Test the connection but don't crash if it fails
+            try:
+                test_embedding = self.embedding_function.embed_query("test")
+                logger.info(f"✅ Ollama embedding model loaded successfully! Embedding dimension: {len(test_embedding)}")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not connect to Ollama to test embedding model: {e}")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize Ollama embeddings class: {e}")
+            raise
 
         self.chroma_client = chromadb.PersistentClient(path=self.chroma_db_path)
         logger.info(f"ChromaDB client initialized at path: {self.chroma_db_path}")

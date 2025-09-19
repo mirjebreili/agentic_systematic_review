@@ -2,3 +2,5 @@
 fields_config.yaml
 /__pycache__
 *.pyc
+chroma_db/
+data/results.xlsx

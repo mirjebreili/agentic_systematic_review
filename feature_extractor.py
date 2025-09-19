@@ -3,7 +3,6 @@ Core extraction logic combining semantic search and LLM calls.
 """
 
 from typing import Dict, List, Any
-import pandas as pd
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 import logging
@@ -19,21 +18,21 @@ class FeatureExtractor:
         self.llm_client = llm_client
         self.top_k_chunks = top_k_chunks
 
-    def extract_all_features(self, paper_collection: Chroma, features_df: pd.DataFrame) -> Dict[str, Dict]:
+    def extract_all_features(self, paper_collection: Chroma, fields: List[Dict[str, Any]]) -> Dict[str, Dict]:
         """
-        Extract all features defined in the features DataFrame for a single paper.
+        Extract all features defined in the fields list for a single paper.
         """
         if not paper_collection:
             logger.error("Cannot extract features, the paper collection is null.")
             return {}
 
         all_extracted_data = {}
-        total_features = len(features_df)
+        total_features = len(fields)
         logger.info(f"Starting extraction for {total_features} features.")
 
-        for index, row in features_df.iterrows():
-            feature_name = row["Feature_Name"]
-            feature_description = row["Description"]
+        for index, field in enumerate(fields):
+            feature_name = field["field_name"]
+            feature_description = field["description"]
             logger.info(f"--- Extracting feature {index + 1}/{total_features}: {feature_name} ---")
 
             extracted_data = self.extract_single_feature(

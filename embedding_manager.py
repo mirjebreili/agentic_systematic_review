@@ -2,7 +2,11 @@
 Manage ChromaDB collections and embeddings for each paper.
 """
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
+try:
+    from langchain_huggingface import HuggingFaceEmbeddings
+except ImportError:
+    # Fallback for older versions
+    from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from typing import List
 from langchain_core.documents import Document

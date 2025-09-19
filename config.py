@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # Embedding Configuration
     embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", alias="EMBEDDING_MODEL")
+    ollama_embedding_url: str = Field(default="http://localhost:11434", alias="OLLAMA_EMBEDDING_URL")
     chunk_size: int = Field(default=512, alias="CHUNK_SIZE")
     chunk_overlap: int = Field(default=50, alias="CHUNK_OVERLAP")
 
@@ -109,6 +110,25 @@ class Settings(BaseSettings):
                 print(f"✅ vLLM connection successful at {url}")
             except Exception as e:
                 print(f"⚠️ Warning: vLLM connection failed at {url}/health. Please ensure vLLM server is running.")
+        return v
+
+    @field_validator('embedding_model', mode='after')
+    @classmethod
+    def check_ollama_embedding_model(cls, v: str) -> str:
+        """Validate that the embedding model exists in Ollama"""
+        try:
+            import requests
+            response = requests.get("http://localhost:11434/api/tags", timeout=5)
+            if response.status_code == 200:
+                models = response.json().get('models', [])
+                model_names = [model['name'] for model in models]
+                if v in model_names:
+                    print(f"✅ Found Ollama embedding model: {v}")
+                else:
+                    print(f"⚠️ Warning: Embedding model '{v}' not found in Ollama.")
+                    print(f"Available models: {model_names}")
+        except Exception as e:
+            print(f"⚠️ Could not verify Ollama embedding model: {e}")
         return v
 
 settings = Settings()

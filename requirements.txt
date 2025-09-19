@@ -16,3 +16,4 @@ tiktoken==0.5.2
 filelock==3.13.1
 pydantic-settings==2.1.0
 PyYAML==6.0.1
+langchain-huggingface

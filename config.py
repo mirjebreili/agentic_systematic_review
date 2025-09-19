@@ -99,17 +99,17 @@ class Settings(BaseSettings):
             try:
                 response = requests.get(url, timeout=5)
                 response.raise_for_status()
-                print(f"✅ Ollama connection successful at {url}")
+                print(f"Ollama connection successful at {url}")
             except Exception as e:
-                print(f"⚠️ Warning: Ollama connection failed at {url}. Please ensure Ollama is running.")
+                print(f"Warning: Ollama connection failed at {url}. Please ensure Ollama is running.")
         elif v == 'vllm':
             url = "http://localhost:8000"  # Default fallback
             try:
                 response = requests.get(f"{url}/health", timeout=5)
                 response.raise_for_status()
-                print(f"✅ vLLM connection successful at {url}")
+                print(f"vLLM connection successful at {url}")
             except Exception as e:
-                print(f"⚠️ Warning: vLLM connection failed at {url}/health. Please ensure vLLM server is running.")
+                print(f"Warning: vLLM connection failed at {url}/health. Please ensure vLLM server is running.")
         return v
 
     @field_validator('embedding_model', mode='after')
@@ -123,12 +123,12 @@ class Settings(BaseSettings):
                 models = response.json().get('models', [])
                 model_names = [model['name'] for model in models]
                 if v in model_names:
-                    print(f"✅ Found Ollama embedding model: {v}")
+                    print(f"Found Ollama embedding model: {v}")
                 else:
-                    print(f"⚠️ Warning: Embedding model '{v}' not found in Ollama.")
+                    print(f"Warning: Embedding model '{v}' not found in Ollama.")
                     print(f"Available models: {model_names}")
         except Exception as e:
-            print(f"⚠️ Could not verify Ollama embedding model: {e}")
+            print(f"Could not verify Ollama embedding model: {e}")
         return v
 
 settings = Settings()

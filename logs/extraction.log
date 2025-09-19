@@ -755,7 +755,10 @@ zipfile.BadZipFile: File is not a zip file
 [2025-09-19 20:13:37,231] [INFO] [root] Function 'process_single_paper' executed in 0.7908 seconds
 [2025-09-19 20:13:37,231] [INFO] [__main__] --- PDF Feature Extraction System Finished ---
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> origin/feature/dynamic-paper-processing
 [2025-09-19 20:35:34,110] [INFO] [__main__] --- Starting PDF Feature Extraction System ---
 [2025-09-19 20:35:34,110] [INFO] [embedding_manager] Initializing Ollama embedding model: sentence-transformers/all-MiniLM-L6-v2
 [2025-09-19 20:35:34,130] [ERROR] [embedding_manager] ❌ Failed to initialize Ollama embeddings: Error raised by inference endpoint: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/embeddings (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fc81c9baea0>: Failed to establish a new connection: [Errno 111] Connection refused'))
@@ -963,4 +966,140 @@ ValueError: Error raised by inference endpoint: HTTPConnectionPool(host='localho
 [2025-09-19 20:37:27,764] [INFO] [excel_handler] Successfully updated results for sample.pdf in data/results.xlsx
 [2025-09-19 20:37:27,765] [INFO] [root] Function 'process_single_paper' executed in 0.3390 seconds
 [2025-09-19 20:37:27,765] [INFO] [__main__] --- PDF Feature Extraction System Finished ---
+<<<<<<< HEAD
+>>>>>>> origin/feature/dynamic-paper-processing
+=======
+[2025-09-19 21:24:34,671] [INFO] [__main__] --- Starting PDF Feature Extraction System ---
+[2025-09-19 21:24:34,672] [INFO] [embedding_manager] Initializing Ollama embedding model: sentence-transformers/all-MiniLM-L6-v2
+[2025-09-19 21:24:34,688] [WARNING] [embedding_manager] Could not connect to Ollama to test embedding model: Error raised by inference endpoint: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/embeddings (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7a101e6ea0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 21:24:34,729] [INFO] [chromadb.telemetry.product.posthog] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[2025-09-19 21:24:35,048] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 21:24:35,049] [INFO] [embedding_manager] ChromaDB client initialized at path: /app/chroma_db
+[2025-09-19 21:24:35,050] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: gemma2:latest
+[2025-09-19 21:24:35,055] [INFO] [yaml_handler] Loading field configuration from fields_config.yaml
+[2025-09-19 21:24:35,056] [INFO] [yaml_handler] Successfully loaded 3 fields.
+[2025-09-19 21:24:35,057] [INFO] [__main__] Found 1 PDF(s) to process.
+[2025-09-19 21:24:35,057] [INFO] [excel_handler] Results file already exists at data/results.xlsx. Skipping initialization.
+[2025-09-19 21:24:35,058] [INFO] [__main__] --- Starting processing for paper: sample.pdf (ID: sample) ---
+[2025-09-19 21:24:35,059] [INFO] [embedding_manager] Collection not found for sample, creating new one...
+[2025-09-19 21:24:35,059] [INFO] [embedding_manager] Processing PDF: papers/sample.pdf
+[2025-09-19 21:24:35,059] [WARNING] [pdf_processor] Using dummy text for sample.pdf due to parsing errors.
+[2025-09-19 21:24:35,059] [INFO] [embedding_manager] Extracted 1 chunks from papers/sample.pdf
+[2025-09-19 21:24:35,082] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 21:24:35,087] [ERROR] [embedding_manager] Failed to create collection for sample: Error raised by inference endpoint: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/embeddings (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7a0f7d4740>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 21:24:35,087] [CRITICAL] [__main__] A critical error occurred while processing sample.pdf: Error raised by inference endpoint: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/embeddings (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7a0f7d4740>: Failed to establish a new connection: [Errno 111] Connection refused'))
+Traceback (most recent call last):
+  File "/app/embedding_manager.py", line 56, in get_or_create_collection
+    existing_collection = self.chroma_client.get_collection(name=paper_id)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/client.py", line 218, in get_collection
+    return self._server.get_collection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/telemetry/opentelemetry/__init__.py", line 127, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/segment.py", line 260, in get_collection
+    raise ValueError(f"Collection {name} does not exist.")
+ValueError: Collection sample does not exist.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/util/connection.py", line 85, in create_connection
+    raise err
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/util/connection.py", line 73, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 111] Connection refused
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/connectionpool.py", line 493, in _make_request
+    conn.request(
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/connection.py", line 494, in request
+    self.endheaders()
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/http/client.py", line 1333, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/http/client.py", line 1093, in _send_output
+    self.send(msg)
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/http/client.py", line 1037, in send
+    self.connect()
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/connection.py", line 325, in connect
+    self.sock = self._new_conn()
+                ^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/connection.py", line 213, in _new_conn
+    raise NewConnectionError(
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f7a0f7d4740>: Failed to establish a new connection: [Errno 111] Connection refused
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/requests/adapters.py", line 486, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/embeddings (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7a0f7d4740>: Failed to establish a new connection: [Errno 111] Connection refused'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/embeddings/ollama.py", line 164, in _process_emb_response
+    res = requests.post(
+          ^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/requests/api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/requests/adapters.py", line 519, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/embeddings (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7a0f7d4740>: Failed to establish a new connection: [Errno 111] Connection refused'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/main.py", line 38, in process_single_paper
+    paper_collection = embedding_manager.get_or_create_collection(paper_id, str(pdf_path))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/embedding_manager.py", line 69, in get_or_create_collection
+    return self.create_paper_collection(paper_id, pdf_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/embedding_manager.py", line 85, in create_paper_collection
+    vectorstore = Chroma.from_texts(
+                  ^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/vectorstores/chroma.py", line 748, in from_texts
+    chroma_collection.add_texts(
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/vectorstores/chroma.py", line 276, in add_texts
+    embeddings = self._embedding_function.embed_documents(texts)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/embeddings/ollama.py", line 211, in embed_documents
+    embeddings = self._embed(instruction_pairs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/embeddings/ollama.py", line 199, in _embed
+    return [self._process_emb_response(prompt) for prompt in iter_]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/embeddings/ollama.py", line 170, in _process_emb_response
+    raise ValueError(f"Error raised by inference endpoint: {e}")
+ValueError: Error raised by inference endpoint: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/embeddings (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7a0f7d4740>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 21:24:35,551] [INFO] [excel_handler] Successfully updated results for sample.pdf in data/results.xlsx
+[2025-09-19 21:24:35,551] [INFO] [root] Function 'process_single_paper' executed in 0.4929 seconds
+[2025-09-19 21:24:35,551] [INFO] [__main__] --- PDF Feature Extraction System Finished ---
 >>>>>>> origin/feature/dynamic-paper-processing

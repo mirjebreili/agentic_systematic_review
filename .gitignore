@@ -1,2 +1,4 @@
 /papers
 fields_config.yaml
+/__pycache__
+*.pyc

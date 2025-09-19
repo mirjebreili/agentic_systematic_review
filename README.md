@@ -1,9 +1,0 @@
-# LocalAgent-SR
-
-This repository contains the source code for LocalAgent-SR, a modular, multi-agent Python application for automating systematic reviews.
-
-## Overview
-
-LocalAgent-SR is designed to run fully offline on a user's local machine. It uses LangGraph for orchestration and Ollama for local LLM inference. The primary goal is to automate the entire systematic review workflow: ingesting documents, screening them against user-defined criteria, and extracting structured data into an Excel file with full, verifiable provenance.
-
-For more details on the architecture and usage, please refer to the project specification.

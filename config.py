@@ -1,20 +1,21 @@
 """
 Load and validate all configuration from .env file using Pydantic models.
-
-Requirements:
-1. Create Pydantic BaseSettings model for type-safe configuration
-2. Validate all paths exist
-3. Validate LLM connectivity on startup
-4. Provide singleton pattern for config access
 """
 
-from pydantic import validator
-from pydantic_settings import BaseSettings
-from typing import Literal
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Literal, Any
 from pathlib import Path
 import requests
 
 class Settings(BaseSettings):
+    # Pydantic V2 model configuration
+    model_config = SettingsConfigDict(
+        protected_namespaces=('settings_',),
+        env_file=".env",
+        env_file_encoding='utf-8'
+    )
+
     # LLM Configuration
     llm_provider: Literal["ollama", "vllm"] = "ollama"
     ollama_base_url: str = "http://localhost:11434"
@@ -43,20 +44,39 @@ class Settings(BaseSettings):
     retry_attempts: int = 3
     log_level: str = "INFO"
 
-    @validator("pdf_directory", "features_file", "chroma_db_path", pre=True, always=True)
-    def validate_path_exists(cls, v):
+    @field_validator("pdf_directory", "chroma_db_path", mode='before')
+    @classmethod
+    def validate_or_create_path(cls, v: Any) -> Path:
+        """Create paths if they don't exist instead of failing validation"""
         if isinstance(v, str):
             path = Path(v)
         else:
             path = v
 
         if not path.exists():
-            raise ValueError(f"Path does not exist: {path}")
+            path.mkdir(parents=True, exist_ok=True)
+            print(f"Created directory: {path}")
 
         return path
 
-    @validator("results_file", "log_file", pre=True, always=True)
-    def validate_and_create_path(cls, v):
+    @field_validator("papers_folder", "fields_config_file", mode='before')
+    @classmethod
+    def validate_required_paths(cls, v: Any) -> Path:
+        """Only validate that these critical paths exist, don't create them"""
+        if isinstance(v, str):
+            path = Path(v)
+        else:
+            path = v
+
+        if not path.exists():
+            print(f"Warning: Required path does not exist: {path}")
+            print("Please create this path before running the application.")
+
+        return path
+
+    @field_validator("results_file", "log_file", mode='before')
+    @classmethod
+    def validate_and_create_path(cls, v: Any) -> Path:
         if isinstance(v, str):
             path = Path(v)
         else:
@@ -67,29 +87,23 @@ class Settings(BaseSettings):
 
         return path
 
-    @validator('llm_provider')
-    def check_llm_connectivity(cls, v, values):
+    @field_validator('llm_provider')
+    @classmethod
+    def check_llm_connectivity(cls, v: str, values: 'Settings') -> str:
         if v == 'ollama':
-            url = values.get('ollama_base_url')
+            url = values.data.get('ollama_base_url')
             try:
-                # Ollama's API root returns a status message
                 response = requests.get(url)
                 response.raise_for_status()
             except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
-                # This is a warning for now, as the user might not have Ollama running yet
                 print(f"Warning: Ollama connection failed at {url}. Please ensure Ollama is running.")
         elif v == 'vllm':
-            url = values.get('vllm_base_url')
-            # vLLM has a /health endpoint
+            url = values.data.get('vllm_base_url')
             try:
                 response = requests.get(f"{url}/health")
                 response.raise_for_status()
             except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
                 print(f"Warning: vLLM connection failed at {url}/health. Please ensure vLLM server is running.")
         return v
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = 'utf-8'
 
 settings = Settings()

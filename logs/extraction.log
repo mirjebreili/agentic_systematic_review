@@ -595,3 +595,114 @@ zipfile.BadZipFile: File is not a zip file
 [2025-09-19 13:31:49,780] [INFO] [__main__] --- Finished processing for paper: sample.pdf ---
 [2025-09-19 13:31:49,780] [INFO] [root] Function 'process_single_paper' executed in 0.2081 seconds
 [2025-09-19 13:31:49,781] [INFO] [__main__] --- PDF Feature Extraction System Finished ---
+[2025-09-19 14:37:41,593] [INFO] [__main__] --- Starting PDF Feature Extraction System ---
+[2025-09-19 14:37:41,593] [INFO] [embedding_manager] Initializing embedding model: all-MiniLM-L6-v2
+[2025-09-19 14:37:56,817] [INFO] [sentence_transformers.SentenceTransformer] Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+[2025-09-19 14:37:58,113] [INFO] [chromadb.telemetry.product.posthog] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[2025-09-19 14:37:58,422] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:37:58,422] [INFO] [embedding_manager] ChromaDB client initialized at path: /app/chroma_db
+[2025-09-19 14:37:58,424] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: qwen2:7b-instruct
+[2025-09-19 14:37:58,427] [INFO] [yaml_handler] Loading field configuration from fields_config.yaml
+[2025-09-19 14:37:58,428] [INFO] [yaml_handler] Successfully loaded 3 fields.
+[2025-09-19 14:37:58,429] [INFO] [__main__] Found 1 PDF(s) to process.
+[2025-09-19 14:37:58,922] [INFO] [excel_handler] Initialized empty results file at data/results.xlsx
+[2025-09-19 14:37:58,924] [INFO] [__main__] --- Starting processing for paper: sample.pdf (ID: sample) ---
+[2025-09-19 14:37:58,925] [INFO] [embedding_manager] Collection 'sample' not found. Creating new collection.
+[2025-09-19 14:37:58,925] [WARNING] [pdf_processor] Using dummy text for sample.pdf due to parsing errors.
+[2025-09-19 14:37:58,926] [INFO] [pdf_processor] Created 1 chunks for paper sample
+[2025-09-19 14:37:58,928] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:37:58,953] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:37:59,157] [INFO] [embedding_manager] Successfully created and persisted collection 'sample' with 1 chunks.
+[2025-09-19 14:37:59,158] [INFO] [feature_extractor] Starting extraction for 3 features.
+[2025-09-19 14:37:59,158] [INFO] [feature_extractor] --- Extracting feature 1/3: Authors ---
+[2025-09-19 14:37:59,176] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:37:59,179] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:37:59,179] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Authors': List of all authors, exactly as written on the first page.'
+[2025-09-19 14:37:59,201] [ERROR] [llm_client] Failed to extract feature 'Authors' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f8c153aba40>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:37:59,201] [INFO] [feature_extractor] --- Extracting feature 2/3: Country ---
+[2025-09-19 14:37:59,217] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:37:59,220] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Country': The country or countries where the research was conducted, based on author affiliations.'
+[2025-09-19 14:37:59,226] [ERROR] [llm_client] Failed to extract feature 'Country' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f8c153d7ce0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:37:59,226] [INFO] [feature_extractor] --- Extracting feature 3/3: Publication Year ---
+[2025-09-19 14:37:59,240] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:37:59,242] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Publication Year': The year the paper was published.'
+[2025-09-19 14:37:59,248] [ERROR] [llm_client] Failed to extract feature 'Publication Year' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f8c16c54e90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:37:59,248] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-19 14:37:59,275] [INFO] [excel_handler] Successfully updated results for sample.pdf in data/results.xlsx
+[2025-09-19 14:37:59,275] [INFO] [__main__] --- Finished processing for paper: sample.pdf ---
+[2025-09-19 14:37:59,275] [INFO] [root] Function 'process_single_paper' executed in 0.3509 seconds
+[2025-09-19 14:37:59,275] [INFO] [__main__] --- PDF Feature Extraction System Finished ---
+[2025-09-19 14:39:04,018] [INFO] [__main__] --- Starting PDF Feature Extraction System ---
+[2025-09-19 14:39:04,019] [INFO] [embedding_manager] Initializing embedding model: all-MiniLM-L6-v2
+[2025-09-19 14:39:10,484] [INFO] [sentence_transformers.SentenceTransformer] Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+[2025-09-19 14:39:11,507] [INFO] [chromadb.telemetry.product.posthog] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[2025-09-19 14:39:11,759] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:39:11,759] [INFO] [embedding_manager] ChromaDB client initialized at path: /app/chroma_db
+[2025-09-19 14:39:11,760] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: qwen2:7b-instruct
+[2025-09-19 14:39:11,763] [INFO] [yaml_handler] Loading field configuration from fields_config.yaml
+[2025-09-19 14:39:11,764] [INFO] [yaml_handler] Successfully loaded 3 fields.
+[2025-09-19 14:39:11,764] [INFO] [__main__] Found 1 PDF(s) to process.
+[2025-09-19 14:39:12,157] [INFO] [excel_handler] Initialized empty results file at data/results.xlsx
+[2025-09-19 14:39:12,159] [INFO] [__main__] --- Starting processing for paper: sample.pdf (ID: sample) ---
+[2025-09-19 14:39:12,160] [INFO] [embedding_manager] Collection 'sample' not found. Creating new collection.
+[2025-09-19 14:39:12,160] [WARNING] [pdf_processor] Using dummy text for sample.pdf due to parsing errors.
+[2025-09-19 14:39:12,160] [INFO] [pdf_processor] Created 1 chunks for paper sample
+[2025-09-19 14:39:12,163] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:39:12,186] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:39:12,240] [INFO] [embedding_manager] Successfully created and persisted collection 'sample' with 1 chunks.
+[2025-09-19 14:39:12,241] [INFO] [feature_extractor] Starting extraction for 3 features.
+[2025-09-19 14:39:12,241] [INFO] [feature_extractor] --- Extracting feature 1/3: Authors ---
+[2025-09-19 14:39:12,255] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:39:12,257] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:39:12,257] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Authors': List of all authors, exactly as written on the first page.'
+[2025-09-19 14:39:12,275] [ERROR] [llm_client] Failed to extract feature 'Authors' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fba50132600>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:39:12,275] [INFO] [feature_extractor] --- Extracting feature 2/3: Country ---
+[2025-09-19 14:39:12,288] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:39:12,291] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Country': The country or countries where the research was conducted, based on author affiliations.'
+[2025-09-19 14:39:12,296] [ERROR] [llm_client] Failed to extract feature 'Country' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fba4f6d71a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:39:12,296] [INFO] [feature_extractor] --- Extracting feature 3/3: Publication Year ---
+[2025-09-19 14:39:12,307] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:39:12,310] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Publication Year': The year the paper was published.'
+[2025-09-19 14:39:12,315] [ERROR] [llm_client] Failed to extract feature 'Publication Year' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fba50139e20>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:39:12,315] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-19 14:39:12,336] [INFO] [excel_handler] Successfully updated results for sample.pdf in data/results.xlsx
+[2025-09-19 14:39:12,336] [INFO] [__main__] --- Finished processing for paper: sample.pdf ---
+[2025-09-19 14:39:12,336] [INFO] [root] Function 'process_single_paper' executed in 0.1773 seconds
+[2025-09-19 14:39:12,336] [INFO] [__main__] --- PDF Feature Extraction System Finished ---
+[2025-09-19 14:41:25,692] [INFO] [__main__] --- Starting PDF Feature Extraction System ---
+[2025-09-19 14:41:25,692] [INFO] [embedding_manager] Initializing embedding model: all-MiniLM-L6-v2
+[2025-09-19 14:41:32,523] [INFO] [sentence_transformers.SentenceTransformer] Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+[2025-09-19 14:41:33,582] [INFO] [chromadb.telemetry.product.posthog] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[2025-09-19 14:41:33,830] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:41:33,831] [INFO] [embedding_manager] ChromaDB client initialized at path: /app/chroma_db
+[2025-09-19 14:41:33,832] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: qwen2:7b-instruct
+[2025-09-19 14:41:33,834] [INFO] [yaml_handler] Loading field configuration from fields_config.yaml
+[2025-09-19 14:41:33,835] [INFO] [yaml_handler] Successfully loaded 3 fields.
+[2025-09-19 14:41:33,836] [INFO] [__main__] Found 1 PDF(s) to process.
+[2025-09-19 14:41:33,836] [INFO] [excel_handler] Results file already exists at data/results.xlsx. Skipping initialization.
+[2025-09-19 14:41:33,837] [INFO] [__main__] --- Starting processing for paper: sample.pdf (ID: sample) ---
+[2025-09-19 14:41:33,838] [INFO] [embedding_manager] Collection 'sample' not found. Creating new collection.
+[2025-09-19 14:41:33,838] [WARNING] [pdf_processor] Using dummy text for sample.pdf due to parsing errors.
+[2025-09-19 14:41:33,839] [INFO] [pdf_processor] Created 1 chunks for paper sample
+[2025-09-19 14:41:33,841] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:41:33,863] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:41:33,906] [INFO] [embedding_manager] Successfully created and persisted collection 'sample' with 1 chunks.
+[2025-09-19 14:41:33,907] [INFO] [feature_extractor] Starting extraction for 3 features.
+[2025-09-19 14:41:33,907] [INFO] [feature_extractor] --- Extracting feature 1/3: Authors ---
+[2025-09-19 14:41:33,954] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:41:33,957] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-19 14:41:33,957] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Authors': List of all authors, exactly as written on the first page.'
+[2025-09-19 14:41:34,208] [ERROR] [llm_client] Failed to extract feature 'Authors' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f9c11772060>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:41:34,208] [INFO] [feature_extractor] --- Extracting feature 2/3: Country ---
+[2025-09-19 14:41:34,226] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:41:34,229] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Country': The country or countries where the research was conducted, based on author affiliations.'
+[2025-09-19 14:41:34,235] [ERROR] [llm_client] Failed to extract feature 'Country' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f9c117711f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:41:34,235] [INFO] [feature_extractor] --- Extracting feature 3/3: Publication Year ---
+[2025-09-19 14:41:34,248] [WARNING] [chromadb.segment.impl.vector.local_persistent_hnsw] Number of requested results 3 is greater than number of elements in index 1, updating n_results = 1
+[2025-09-19 14:41:34,250] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'Publication Year': The year the paper was published.'
+[2025-09-19 14:41:34,255] [ERROR] [llm_client] Failed to extract feature 'Publication Year' after retries. Error: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f9c117709e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+[2025-09-19 14:41:34,255] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-19 14:41:34,433] [INFO] [excel_handler] Successfully updated results for sample.pdf in data/results.xlsx
+[2025-09-19 14:41:34,434] [INFO] [__main__] --- Finished processing for paper: sample.pdf ---
+[2025-09-19 14:41:34,434] [INFO] [root] Function 'process_single_paper' executed in 0.5969 seconds
+[2025-09-19 14:41:34,434] [INFO] [__main__] --- PDF Feature Extraction System Finished ---

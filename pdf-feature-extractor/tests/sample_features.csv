@@ -1,0 +1,5 @@
+Feature_Name,Description
+sample_size,"Total number of participants in the study"
+primary_outcome,"Main outcome measure used in the study"
+p_value,"Reported p-value for primary outcome"
+funding_source,"Organization that funded the research"

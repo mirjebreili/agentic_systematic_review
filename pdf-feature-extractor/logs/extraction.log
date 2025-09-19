@@ -1,0 +1,164 @@
+[2025-09-16 17:20:51,685] [INFO] [feature_extractor] Starting extraction for 2 features.
+[2025-09-16 17:20:51,686] [INFO] [feature_extractor] --- Extracting feature 1/2: Sample Size ---
+[2025-09-16 17:20:51,686] [INFO] [feature_extractor] --- Extracting feature 2/2: P-Value ---
+[2025-09-16 17:20:51,686] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-16 17:20:51,689] [WARNING] [feature_extractor] No relevant chunks found for feature: Effect Size
+[2025-09-16 17:20:51,691] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:20:51,698] [INFO] [llm_client] Successfully extracted feature 'Test Feature': Test Value
+[2025-09-16 17:20:51,699] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:20:51,700] [INFO] [pdf_processor] Created 2 chunks for paper test_paper
+[2025-09-16 17:21:39,173] [INFO] [feature_extractor] Starting extraction for 2 features.
+[2025-09-16 17:21:39,174] [INFO] [feature_extractor] --- Extracting feature 1/2: Sample Size ---
+[2025-09-16 17:21:39,174] [INFO] [feature_extractor] --- Extracting feature 2/2: P-Value ---
+[2025-09-16 17:21:39,174] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-16 17:21:39,176] [WARNING] [feature_extractor] No relevant chunks found for feature: Effect Size
+[2025-09-16 17:21:39,182] [INFO] [excel_handler] Successfully loaded 4 features from /app/pdf-feature-extractor/tests/sample_features.csv
+[2025-09-16 17:21:39,182] [INFO] [embedding_manager] Initializing embedding model: all-MiniLM-L6-v2
+[2025-09-16 17:21:55,934] [INFO] [sentence_transformers.SentenceTransformer] Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+[2025-09-16 17:22:05,329] [INFO] [chromadb.telemetry.product.posthog] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[2025-09-16 17:22:05,943] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:22:05,943] [INFO] [embedding_manager] ChromaDB client initialized at path: /app/pdf-feature-extractor/test_artifacts/chroma_db
+[2025-09-16 17:22:05,943] [INFO] [main] --- Starting processing for paper: sample.pdf (ID: a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e11) ---
+[2025-09-16 17:22:05,945] [INFO] [embedding_manager] Collection 'a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e11' not found. Creating new collection.
+[2025-09-16 17:22:05,945] [INFO] [pdf_processor] Extracting text from /app/pdf-feature-extractor/tests/sample.pdf
+[2025-09-16 17:22:05,945] [INFO] [pdf_processor] Extracted 1 pages from /app/pdf-feature-extractor/tests/sample.pdf
+[2025-09-16 17:22:05,946] [INFO] [pdf_processor] Created 3 chunks for paper a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e11
+[2025-09-16 17:22:05,950] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:22:05,950] [CRITICAL] [main] A critical error occurred while processing sample.pdf: Expected collection name that (1) contains 3-63 characters, (2) starts and ends with an alphanumeric character, (3) otherwise contains only alphanumeric characters, underscores or hyphens (-), (4) contains no two consecutive periods (..) and (5) is not a valid IPv4 address, got a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e11
+Traceback (most recent call last):
+  File "/app/pdf-feature-extractor/embedding_manager.py", line 41, in get_or_create_collection
+    self.chroma_client.get_collection(name=paper_id)
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/client.py", line 218, in get_collection
+    return self._server.get_collection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/telemetry/opentelemetry/__init__.py", line 127, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/segment.py", line 260, in get_collection
+    raise ValueError(f"Collection {name} does not exist.")
+ValueError: Collection a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e11 does not exist.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/pdf-feature-extractor/main.py", line 49, in process_single_paper
+    paper_collection = embedding_manager.get_or_create_collection(paper_id, str(pdf_path))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/pdf-feature-extractor/embedding_manager.py", line 62, in get_or_create_collection
+    collection = Chroma.from_documents(
+                 ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/vectorstores/chroma.py", line 790, in from_documents
+    return cls.from_texts(
+           ^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/vectorstores/chroma.py", line 726, in from_texts
+    chroma_collection = cls(
+                        ^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/langchain_community/vectorstores/chroma.py", line 127, in __init__
+    self._collection = self._client.get_or_create_collection(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/client.py", line 237, in get_or_create_collection
+    return self._server.get_or_create_collection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/telemetry/opentelemetry/__init__.py", line 127, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/segment.py", line 216, in get_or_create_collection
+    return self.create_collection(  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/telemetry/opentelemetry/__init__.py", line 127, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/segment.py", line 162, in create_collection
+    check_index_name(name)
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/chromadb/api/segment.py", line 77, in check_index_name
+    raise ValueError(msg)
+ValueError: Expected collection name that (1) contains 3-63 characters, (2) starts and ends with an alphanumeric character, (3) otherwise contains only alphanumeric characters, underscores or hyphens (-), (4) contains no two consecutive periods (..) and (5) is not a valid IPv4 address, got a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e11
+[2025-09-16 17:22:05,958] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:22:05,962] [INFO] [llm_client] Successfully extracted feature 'Test Feature': Test Value
+[2025-09-16 17:22:05,963] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:22:05,964] [INFO] [pdf_processor] Created 2 chunks for paper test_paper
+[2025-09-16 17:23:29,746] [INFO] [feature_extractor] Starting extraction for 2 features.
+[2025-09-16 17:23:29,747] [INFO] [feature_extractor] --- Extracting feature 1/2: Sample Size ---
+[2025-09-16 17:23:29,747] [INFO] [feature_extractor] --- Extracting feature 2/2: P-Value ---
+[2025-09-16 17:23:29,747] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-16 17:23:29,749] [WARNING] [feature_extractor] No relevant chunks found for feature: Effect Size
+[2025-09-16 17:23:29,755] [INFO] [excel_handler] Successfully loaded 4 features from /app/pdf-feature-extractor/tests/sample_features.csv
+[2025-09-16 17:23:29,755] [INFO] [embedding_manager] Initializing embedding model: all-MiniLM-L6-v2
+[2025-09-16 17:23:37,280] [INFO] [sentence_transformers.SentenceTransformer] Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+[2025-09-16 17:23:38,412] [INFO] [chromadb.telemetry.product.posthog] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[2025-09-16 17:23:38,918] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:23:38,918] [INFO] [embedding_manager] ChromaDB client initialized at path: /app/pdf-feature-extractor/test_artifacts/chroma_db
+[2025-09-16 17:23:38,918] [INFO] [main] --- Starting processing for paper: sample.pdf (ID: a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1) ---
+[2025-09-16 17:23:38,919] [INFO] [embedding_manager] Collection 'a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1' not found. Creating new collection.
+[2025-09-16 17:23:38,919] [INFO] [pdf_processor] Extracting text from /app/pdf-feature-extractor/tests/sample.pdf
+[2025-09-16 17:23:38,920] [INFO] [pdf_processor] Extracted 1 pages from /app/pdf-feature-extractor/tests/sample.pdf
+[2025-09-16 17:23:38,920] [INFO] [pdf_processor] Created 3 chunks for paper a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1
+[2025-09-16 17:23:38,925] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:23:38,949] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:23:39,024] [INFO] [embedding_manager] Successfully created and persisted collection 'a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1' with 3 chunks.
+[2025-09-16 17:23:39,026] [INFO] [feature_extractor] Starting extraction for 4 features.
+[2025-09-16 17:23:39,026] [INFO] [feature_extractor] --- Extracting feature 1/4: sample_size ---
+[2025-09-16 17:23:39,053] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:23:39,053] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'sample_size': Total number of participants in the study'
+[2025-09-16 17:23:39,054] [INFO] [feature_extractor] --- Extracting feature 2/4: primary_outcome ---
+[2025-09-16 17:23:39,085] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'primary_outcome': Main outcome measure used in the study'
+[2025-09-16 17:23:39,086] [INFO] [feature_extractor] --- Extracting feature 3/4: p_value ---
+[2025-09-16 17:23:39,102] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'p_value': Reported p-value for primary outcome'
+[2025-09-16 17:23:39,102] [INFO] [feature_extractor] --- Extracting feature 4/4: funding_source ---
+[2025-09-16 17:23:39,118] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'funding_source': Organization that funded the research'
+[2025-09-16 17:23:39,118] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-16 17:23:39,119] [CRITICAL] [main] A critical error occurred while processing sample.pdf: Excel file format cannot be determined, you must specify an engine manually.
+Traceback (most recent call last):
+  File "/app/pdf-feature-extractor/main.py", line 59, in process_single_paper
+    excel_handler.update_results(settings.results_file, paper_name, extracted_data, processing_time)
+  File "/app/pdf-feature-extractor/excel_handler.py", line 69, in update_results
+    df = pd.read_excel(results_path)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pandas/io/excel/_base.py", line 495, in read_excel
+    io = ExcelFile(
+         ^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/pandas/io/excel/_base.py", line 1554, in __init__
+    raise ValueError(
+ValueError: Excel file format cannot be determined, you must specify an engine manually.
+[2025-09-16 17:23:39,124] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:23:39,128] [INFO] [llm_client] Successfully extracted feature 'Test Feature': Test Value
+[2025-09-16 17:23:39,128] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:23:39,129] [INFO] [pdf_processor] Created 2 chunks for paper test_paper
+[2025-09-16 17:24:41,469] [INFO] [feature_extractor] Starting extraction for 2 features.
+[2025-09-16 17:24:41,470] [INFO] [feature_extractor] --- Extracting feature 1/2: Sample Size ---
+[2025-09-16 17:24:41,470] [INFO] [feature_extractor] --- Extracting feature 2/2: P-Value ---
+[2025-09-16 17:24:41,470] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-16 17:24:41,473] [WARNING] [feature_extractor] No relevant chunks found for feature: Effect Size
+[2025-09-16 17:24:41,478] [INFO] [excel_handler] Successfully loaded 4 features from /app/pdf-feature-extractor/tests/sample_features.csv
+[2025-09-16 17:24:41,479] [INFO] [embedding_manager] Initializing embedding model: all-MiniLM-L6-v2
+[2025-09-16 17:24:49,049] [INFO] [sentence_transformers.SentenceTransformer] Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+[2025-09-16 17:24:50,290] [INFO] [chromadb.telemetry.product.posthog] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[2025-09-16 17:24:50,803] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:24:50,803] [INFO] [embedding_manager] ChromaDB client initialized at path: /app/pdf-feature-extractor/test_artifacts/chroma_db
+[2025-09-16 17:24:50,811] [INFO] [excel_handler] Initialized empty results file at test_artifacts/results.csv
+[2025-09-16 17:24:50,811] [INFO] [main] --- Starting processing for paper: sample.pdf (ID: a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1) ---
+[2025-09-16 17:24:50,812] [INFO] [embedding_manager] Collection 'a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1' not found. Creating new collection.
+[2025-09-16 17:24:50,812] [INFO] [pdf_processor] Extracting text from /app/pdf-feature-extractor/tests/sample.pdf
+[2025-09-16 17:24:50,812] [INFO] [pdf_processor] Extracted 1 pages from /app/pdf-feature-extractor/tests/sample.pdf
+[2025-09-16 17:24:50,813] [INFO] [pdf_processor] Created 3 chunks for paper a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1
+[2025-09-16 17:24:50,818] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:24:50,846] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:24:50,907] [INFO] [embedding_manager] Successfully created and persisted collection 'a5ca45dd0586b0ae1d5199d5f62b2db02f4da67c1934f6a8e1a55b6cf4e07e1' with 3 chunks.
+[2025-09-16 17:24:50,909] [INFO] [feature_extractor] Starting extraction for 4 features.
+[2025-09-16 17:24:50,909] [INFO] [feature_extractor] --- Extracting feature 1/4: sample_size ---
+[2025-09-16 17:24:50,935] [ERROR] [chromadb.telemetry.product.posthog] Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+[2025-09-16 17:24:50,936] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'sample_size': Total number of participants in the study'
+[2025-09-16 17:24:50,936] [INFO] [feature_extractor] --- Extracting feature 2/4: primary_outcome ---
+[2025-09-16 17:24:50,953] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'primary_outcome': Main outcome measure used in the study'
+[2025-09-16 17:24:50,954] [INFO] [feature_extractor] --- Extracting feature 3/4: p_value ---
+[2025-09-16 17:24:50,970] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'p_value': Reported p-value for primary outcome'
+[2025-09-16 17:24:50,970] [INFO] [feature_extractor] --- Extracting feature 4/4: funding_source ---
+[2025-09-16 17:24:50,986] [INFO] [embedding_manager] Found 1 relevant chunks for query: 'Regarding 'funding_source': Organization that funded the research'
+[2025-09-16 17:24:50,986] [INFO] [feature_extractor] Completed extraction for all features.
+[2025-09-16 17:24:50,993] [INFO] [excel_handler] Successfully updated results for sample.pdf in test_artifacts/results.csv
+[2025-09-16 17:24:50,993] [INFO] [main] --- Finished processing for paper: sample.pdf ---
+[2025-09-16 17:24:50,993] [INFO] [root] Function 'process_single_paper' executed in 0.1826 seconds
+[2025-09-16 17:24:50,997] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:24:51,001] [INFO] [llm_client] Successfully extracted feature 'Test Feature': Test Value
+[2025-09-16 17:24:51,002] [INFO] [llm_client] Initialized LLM client for provider: ollama with model: test-model
+[2025-09-16 17:24:51,003] [INFO] [pdf_processor] Created 2 chunks for paper test_paper

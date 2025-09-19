@@ -2,7 +2,10 @@
 Manage ChromaDB collections and embeddings for each paper.
 """
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
+try:
+    from langchain_ollama import OllamaEmbeddings
+except ImportError:
+    from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
 from typing import List
 from langchain_core.documents import Document
@@ -15,58 +18,88 @@ from pdf_processor import PDFProcessor
 logger = logging.getLogger(__name__)
 
 class EmbeddingManager:
-    def __init__(self, chroma_db_path: str, embedding_model: str, pdf_processor: PDFProcessor):
+    def __init__(self, chroma_db_path: Path, embedding_model_name: str, pdf_processor: PDFProcessor):
         """Initialize embedding model and ChromaDB client."""
-        self.chroma_db_path = str(Path(chroma_db_path).resolve())
-        self.embedding_model_name = embedding_model
+        self.chroma_db_path = str(chroma_db_path.resolve())
+        self.embedding_model_name = embedding_model_name
         self.pdf_processor = pdf_processor
 
-        logger.info(f"Initializing embedding model: {self.embedding_model_name}")
-        self.embedding_function = HuggingFaceEmbeddings(
-            model_name=self.embedding_model_name,
-            model_kwargs={'device': 'cpu'}, # Explicitly use CPU
-            encode_kwargs={'normalize_embeddings': True}
-        )
+        chroma_db_path.mkdir(parents=True, exist_ok=True)
+
+        logger.info(f"Initializing Ollama embedding model: {embedding_model_name}")
+
+        try:
+            self.embedding_function = OllamaEmbeddings(
+                base_url="http://localhost:11434",  # Default Ollama URL
+                model=self.embedding_model_name,
+                show_progress=True,
+            )
+
+            # Test the connection but don't crash if it fails
+            try:
+                test_embedding = self.embedding_function.embed_query("test")
+                logger.info(f"Ollama embedding model loaded successfully! Embedding dimension: {len(test_embedding)}")
+            except Exception as e:
+                logger.warning(f"Could not connect to Ollama to test embedding model: {e}")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize Ollama embeddings class: {e}")
+            raise
 
         self.chroma_client = chromadb.PersistentClient(path=self.chroma_db_path)
         logger.info(f"ChromaDB client initialized at path: {self.chroma_db_path}")
 
     def get_or_create_collection(self, paper_id: str, pdf_path: str) -> Chroma:
-        """
-        Get an existing collection or create a new one if it doesn't exist.
-        This handles caching by not reprocessing existing papers.
-        """
+        """Check if collection exists, create if not"""
         try:
-            # Check if the collection already exists
-            self.chroma_client.get_collection(name=paper_id)
-            logger.info(f"Collection '{paper_id}' already exists. Loading from disk.")
-            collection = Chroma(
+            # Try to get existing collection first
+            existing_collection = self.chroma_client.get_collection(name=paper_id)
+            logger.info(f"Found existing collection for paper: {paper_id}")
+
+            # Return ChromaDB wrapper for existing collection
+            return Chroma(
                 client=self.chroma_client,
                 collection_name=paper_id,
-                embedding_function=self.embedding_function,
+                embedding_function=self.embedding_function
             )
-            return collection
-        except ValueError:
-            # Collection does not exist, so create it
-            logger.info(f"Collection '{paper_id}' not found. Creating new collection.")
 
-            # Process the PDF to get chunks
-            documents = self.pdf_processor.extract_text_from_pdf(pdf_path)
-            chunks = self.pdf_processor.create_smart_chunks(documents, paper_id)
+        except Exception as e:
+            # Collection doesn't exist, create it
+            logger.info(f"Collection not found for {paper_id}, creating new one...")
+            return self.create_paper_collection(paper_id, pdf_path)
+
+    def create_paper_collection(self, paper_id: str, pdf_path: str) -> Chroma:
+        """Create new collection and embed chunks"""
+        try:
+            # Extract and chunk the PDF
+            logger.info(f"Processing PDF: {pdf_path}")
+            chunks = self.pdf_processor.extract_and_chunk_pdf(pdf_path)
 
             if not chunks:
-                logger.warning(f"No chunks were created for {pdf_path}. Cannot create collection.")
+                logger.warning(f"No chunks extracted from {pdf_path}")
                 return None
 
-            # Create a new ChromaDB collection
-            collection = Chroma.from_documents(
-                documents=chunks,
+            logger.info(f"Extracted {len(chunks)} chunks from {pdf_path}")
+
+            # Create ChromaDB collection with chunks
+            vectorstore = Chroma.from_texts(
+                texts=[chunk['content'] for chunk in chunks],
+                metadatas=[{
+                    'source': pdf_path,
+                    'chunk_id': chunk['chunk_id'],
+                    'page_number': chunk.get('page_number', 0)
+                } for chunk in chunks],
                 embedding=self.embedding_function,
-                collection_name=paper_id,
-                persist_directory=self.chroma_db_path,
+                client=self.chroma_client,
+                collection_name=paper_id
             )
-            logger.info(f"Successfully created and persisted collection '{paper_id}' with {len(chunks)} chunks.")
-            return collection
+
+            logger.info(f"Created collection '{paper_id}' with {len(chunks)} chunks")
+            return vectorstore
+
+        except Exception as e:
+            logger.error(f"Failed to create collection for {paper_id}: {e}")
+            raise
 
     def semantic_search(self, collection: Chroma, query: str, k: int = 5) -> List[Document]:
         """Perform semantic search and return relevant chunks."""

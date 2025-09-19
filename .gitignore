@@ -1,4 +1,8 @@
-/papers
-fields_config.yaml
-/__pycache__
+.env
+.env.local
+/papers/
+/__pycache__/
 *.pyc
+chroma_db/
+data/
+logs/

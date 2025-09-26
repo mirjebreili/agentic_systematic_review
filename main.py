@@ -54,7 +54,11 @@ def _process_single_pdf(
     """Run the agent pipeline for a single PDF and return summary messages."""
     message_queue: Queue = Queue()
 
-    pdf_agent = PDFAgent(message_queue, [pdf_path])
+    pdf_agent = PDFAgent(
+        message_queue,
+        [pdf_path],
+        embedding_manager.pdf_processor,
+    )
     embedding_agent = EmbeddingAgent(message_queue, embedding_manager)
     extraction_agent = ExtractionAgent(message_queue, feature_extractor, fields)
     results_agent = ResultsAgent(message_queue, excel_handler, settings.results_file, field_names)

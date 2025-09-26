@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from pdf_processor import PDFProcessor
 from langchain_core.documents import Document
 
@@ -27,6 +27,32 @@ class TestPDFProcessor(unittest.TestCase):
             self.assertIn("chunk_index", chunk.metadata)
             self.assertIn("chunk_id", chunk.metadata)
             self.assertTrue(chunk.page_content)
+
+    @patch.object(PDFProcessor, "create_smart_chunks")
+    @patch.object(PDFProcessor, "extract_text_from_pdf")
+    def test_extract_and_chunk_pdf_success(self, mock_extract, mock_create_chunks):
+        mock_documents = [Document(page_content="content", metadata={"page": 1})]
+        mock_chunks = [Document(page_content="chunk", metadata={"page": 1})]
+        mock_extract.return_value = mock_documents
+        mock_create_chunks.return_value = mock_chunks
+
+        result = self.processor.extract_and_chunk_pdf("sample.pdf", "paper")
+
+        self.assertEqual(result, mock_chunks)
+        mock_extract.assert_called_once_with("sample.pdf")
+        mock_create_chunks.assert_called_once_with(mock_documents, "paper")
+
+    @patch.object(PDFProcessor, "extract_text_from_pdf", side_effect=ValueError("boom"))
+    def test_extract_and_chunk_pdf_handles_extraction_error(self, _mock_extract):
+        result = self.processor.extract_and_chunk_pdf("sample.pdf", "paper")
+        self.assertIsNone(result)
+
+    @patch.object(PDFProcessor, "create_smart_chunks", side_effect=RuntimeError("chunk boom"))
+    @patch.object(PDFProcessor, "extract_text_from_pdf", return_value=[Document(page_content="content", metadata={"page": 1})])
+    def test_extract_and_chunk_pdf_handles_chunking_error(self, mock_extract, _mock_chunks):
+        result = self.processor.extract_and_chunk_pdf("sample.pdf", "paper")
+        self.assertIsNone(result)
+        mock_extract.assert_called_once_with("sample.pdf")
 
 if __name__ == '__main__':
     unittest.main()

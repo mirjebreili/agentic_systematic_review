@@ -1,7 +1,7 @@
 langchain
 langchain-chroma>=0.1.0
 langchain-ollama>=0.1.0
-langchain-vllm>=0.1.0
+vllm >=0.1.0
 ollama>=0.1.7
 langgraph==0.0.26
 chromadb==0.4.22

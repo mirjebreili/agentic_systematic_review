@@ -3,7 +3,7 @@ Unified interface for Ollama and vLLM providers using LangChain.
 """
 
 from langchain_ollama import OllamaLLM
-from langchain_vllm import VLLM
+from langchain_community.llms import VLLM
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field

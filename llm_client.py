@@ -2,10 +2,11 @@
 Unified interface for Ollama and vLLM providers using LangChain.
 """
 
-from langchain_community.llms import Ollama, VLLM
+from langchain_ollama import OllamaLLM
+from langchain_vllm import VLLM
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 import logging
 from utils import retry_with_backoff
@@ -33,7 +34,7 @@ class LLMClient:
         }
 
         if provider == "ollama":
-            self.llm = Ollama(
+            self.llm = OllamaLLM(
                 base_url=base_url,
                 **common_params
             )

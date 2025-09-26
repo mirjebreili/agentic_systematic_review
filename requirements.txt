@@ -1,5 +1,7 @@
 langchain
-langchain-community>=0.0.20
+langchain-chroma>=0.1.0
+langchain-ollama>=0.1.0
+langchain-vllm>=0.1.0
 ollama>=0.1.7
 langgraph==0.0.26
 chromadb==0.4.22
@@ -12,10 +14,9 @@ python-dotenv==1.0.0
 tqdm==4.66.1
 requests==2.31.0
 numpy
-pydantic
+pydantic>=2.0.0
 tiktoken==0.5.2
 filelock==3.13.1
 pydantic-settings==2.1.0
 PyYAML==6.0.1
 langchain-huggingface
-langchain-ollama>=0.1.0

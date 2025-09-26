@@ -2,11 +2,8 @@
 Manage ChromaDB collections and embeddings for each paper.
 """
 
-try:
-    from langchain_ollama import OllamaEmbeddings
-except ImportError:
-    from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_ollama import OllamaEmbeddings
+from langchain_chroma import Chroma
 from typing import List, Optional
 from langchain_core.documents import Document
 from pathlib import Path
@@ -32,15 +29,23 @@ class EmbeddingManager:
             self.embedding_function = OllamaEmbeddings(
                 base_url="http://localhost:11434",  # Default Ollama URL
                 model=self.embedding_model_name,
-                show_progress=True,
             )
 
-            # Test the connection but don't crash if it fails
             try:
                 test_embedding = self.embedding_function.embed_query("test")
-                logger.info(f"Ollama embedding model loaded successfully! Embedding dimension: {len(test_embedding)}")
-            except Exception as e:
-                logger.warning(f"Could not connect to Ollama to test embedding model: {e}")
+                logger.info(
+                    "Ollama embedding model loaded successfully! Embedding dimension: %d",
+                    len(test_embedding),
+                )
+            except Exception as conn_error:
+                logger.error(
+                    "Failed to connect to the Ollama embedding service at %s: %s",
+                    "http://localhost:11434",
+                    conn_error,
+                )
+                raise RuntimeError(
+                    "Unable to connect to the Ollama embedding service. Ensure Ollama is running and accessible."
+                ) from conn_error
 
         except Exception as e:
             logger.error(f"Failed to initialize Ollama embeddings class: {e}")

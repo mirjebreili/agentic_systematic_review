@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     pdf_directory: Path = Field(default=Path("./data/pdfs"), alias="PDF_DIRECTORY")
     features_file: Path = Field(default=Path("./data/features.xlsx"), alias="FEATURES_FILE")
     results_file: Path = Field(default=Path("./data/results.xlsx"), alias="RESULTS_FILE")
+    progress_file: Path = Field(default=Path("./data/progress.json"), alias="PROGRESS_FILE")
     chroma_db_path: Path = Field(default=Path("./chroma_db"), alias="CHROMA_DB_PATH")
     log_file: Path = Field(default=Path("./logs/extraction.log"), alias="LOG_FILE")
 
@@ -77,7 +78,7 @@ class Settings(BaseSettings):
 
         return path
 
-    @field_validator("results_file", "log_file", mode='before')
+    @field_validator("results_file", "log_file", "progress_file", mode='before')
     @classmethod
     def validate_and_create_path(cls, v: Any) -> Path:
         if isinstance(v, str):

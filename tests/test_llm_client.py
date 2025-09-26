@@ -4,15 +4,15 @@ from llm_client import LLMClient, FeatureExtractionOutput
 
 class TestLLMClient(unittest.TestCase):
 
-    @patch('llm_client.Ollama')
-    def test_llm_client_initialization(self, mock_ollama):
+    @patch('llm_client.OllamaLLM')
+    def test_llm_client_initialization(self, mock_ollama_llm):
         # Test if the client initializes correctly
         client = LLMClient(provider="ollama", base_url="http://localhost:11434", model_name="test-model", temperature=0.1, max_tokens=100)
         self.assertIsNotNone(client.llm)
-        mock_ollama.assert_called_once()
+        mock_ollama_llm.assert_called_once()
 
-    @patch('llm_client.Ollama')
-    def test_extract_feature_mocked(self, mock_ollama):
+    @patch('llm_client.OllamaLLM')
+    def test_extract_feature_mocked(self, mock_ollama_llm):
         # Setup client
         client = LLMClient(provider="ollama", base_url="http://localhost:11434", model_name="test-model", temperature=0.1, max_tokens=100)
 
@@ -33,7 +33,7 @@ class TestLLMClient(unittest.TestCase):
 
         mock_prompt_llm_chain = MagicMock()
 
-        # client.llm is already a mock of Ollama
+        # client.llm is already a mock of OllamaLLM
         # client.output_parser is a real object. We can leave it or mock it.
 
         # Let's mock the two __or__ calls

@@ -3,7 +3,7 @@ Core extraction logic combining semantic search and LLM calls.
 """
 
 from typing import Dict, List, Any
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 import logging
 

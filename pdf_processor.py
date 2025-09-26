@@ -4,7 +4,7 @@ Handle PDF text extraction and intelligent chunking using LangChain.
 
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from typing import List, Dict
+from typing import List, Optional
 from langchain_core.documents import Document
 import logging
 import hashlib
@@ -54,3 +54,22 @@ class PDFProcessor:
 
         logger.info(f"Created {len(chunks)} chunks for paper {paper_id}")
         return chunks
+
+    def extract_and_chunk_pdf(self, pdf_path: str, paper_id: str) -> Optional[List[Document]]:
+        """Extract a PDF and generate enriched chunks, returning ``None`` on failure."""
+
+        try:
+            documents = self.extract_text_from_pdf(pdf_path)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.error(
+                "Error extracting text from %s: %s", pdf_path, exc, exc_info=True
+            )
+            return None
+
+        try:
+            return self.create_smart_chunks(documents, paper_id)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.error(
+                "Error chunking extracted text for %s: %s", pdf_path, exc, exc_info=True
+            )
+            return None

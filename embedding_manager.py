@@ -7,7 +7,7 @@ try:
 except ImportError:
     from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
-from typing import List
+from typing import List, Optional
 from langchain_core.documents import Document
 from pathlib import Path
 import logging
@@ -49,7 +49,12 @@ class EmbeddingManager:
         self.chroma_client = chromadb.PersistentClient(path=self.chroma_db_path)
         logger.info(f"ChromaDB client initialized at path: {self.chroma_db_path}")
 
-    def get_or_create_collection(self, paper_id: str, pdf_path: str) -> Chroma:
+    def get_or_create_collection(
+        self,
+        paper_id: str,
+        pdf_path: str,
+        chunks: Optional[List[Document]] = None,
+    ) -> Optional[Chroma]:
         """Check if collection exists, create if not"""
         try:
             # Try to get existing collection first
@@ -66,40 +71,48 @@ class EmbeddingManager:
         except Exception as e:
             # Collection doesn't exist, create it
             logger.info(f"Collection not found for {paper_id}, creating new one...")
-            return self.create_paper_collection(paper_id, pdf_path)
+            return self.create_paper_collection(paper_id, pdf_path, chunks=chunks)
 
-    def create_paper_collection(self, paper_id: str, pdf_path: str) -> Chroma:
+    def create_paper_collection(
+        self,
+        paper_id: str,
+        pdf_path: str,
+        chunks: Optional[List[Document]] = None,
+    ) -> Optional[Chroma]:
         """Create new collection and embed chunks"""
         try:
-            # Extract and chunk the PDF
-            logger.info(f"Processing PDF: {pdf_path}")
-            chunks = self.pdf_processor.extract_and_chunk_pdf(pdf_path)
+            logger.info(f"Preparing collection for paper: {paper_id}")
+
+            if chunks is None:
+                logger.debug("No precomputed chunks provided for %s. Extracting afresh.", paper_id)
+                chunks = self.pdf_processor.extract_and_chunk_pdf(pdf_path, paper_id)
 
             if not chunks:
-                logger.warning(f"No chunks extracted from {pdf_path}")
+                logger.error(
+                    "No chunks available for %s. Skipping collection creation.", paper_id
+                )
                 return None
 
-            logger.info(f"Extracted {len(chunks)} chunks from {pdf_path}")
+            for chunk in chunks:
+                chunk.metadata.setdefault("source", pdf_path)
+                if "page_number" not in chunk.metadata and "page" in chunk.metadata:
+                    chunk.metadata["page_number"] = chunk.metadata["page"]
 
-            # Create ChromaDB collection with chunks
-            vectorstore = Chroma.from_texts(
-                texts=[chunk['content'] for chunk in chunks],
-                metadatas=[{
-                    'source': pdf_path,
-                    'chunk_id': chunk['chunk_id'],
-                    'page_number': chunk.get('page_number', 0)
-                } for chunk in chunks],
+            vectorstore = Chroma.from_documents(
+                documents=chunks,
                 embedding=self.embedding_function,
                 client=self.chroma_client,
-                collection_name=paper_id
+                collection_name=paper_id,
             )
 
-            logger.info(f"Created collection '{paper_id}' with {len(chunks)} chunks")
+            logger.info(f"Created collection '%s' with %d chunks", paper_id, len(chunks))
             return vectorstore
 
-        except Exception as e:
-            logger.error(f"Failed to create collection for {paper_id}: {e}")
-            raise
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.error(
+                "Failed to create collection for %s from %s: %s", paper_id, pdf_path, exc, exc_info=True
+            )
+            return None
 
     def semantic_search(self, collection: Chroma, query: str, k: int = 5) -> List[Document]:
         """Perform semantic search and return relevant chunks."""

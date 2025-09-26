@@ -8,14 +8,17 @@ from pathlib import Path
 from queue import Queue
 from typing import Any, Dict, Sequence
 
+from pdf_processor import PDFProcessor
+
 
 class PDFAgent:
     """Agent responsible for preparing PDF metadata for downstream stages."""
 
-    def __init__(self, queue: Queue, pdf_files: Sequence[Path]):
+    def __init__(self, queue: Queue, pdf_files: Sequence[Path], pdf_processor: PDFProcessor):
         self.queue = queue
         self.pdf_files = list(pdf_files)
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.pdf_processor = pdf_processor
 
     def run(self) -> None:
         """Enqueue PDF metadata for processing."""
@@ -28,18 +31,27 @@ class PDFAgent:
                 paper_name = pdf_path.name
                 paper_id = pdf_path.stem
 
+                chunks = self.pdf_processor.extract_and_chunk_pdf(str(pdf_path), paper_id)
+                if chunks is None:
+                    raise RuntimeError(
+                        f"Failed to extract or chunk PDF located at {pdf_path}"  # noqa: EM101
+                    )
+
                 message = {
                     "status": "success",
                     "stage": "pdf_processed",
                     "paper_id": paper_id,
                     "paper_name": paper_name,
                     "payload": {
-                        "pdf_path": pdf_path,
+                        "pdf_path": str(pdf_path),
                         "start_time": start_time,
+                        "chunks": chunks,
                     },
                 }
                 self.queue.put(message)
-                self.logger.debug("Queued PDF for processing: %s", pdf_path)
+                self.logger.info(
+                    "PDF %s processed with %d chunks", pdf_path, len(chunks)
+                )
             except Exception as exc:  # pylint: disable=broad-except
                 error_message = {
                     "status": "error",
@@ -77,7 +89,16 @@ class EmbeddingAgent:
             try:
                 pdf_path = Path(message["payload"]["pdf_path"])
                 paper_id = message["paper_id"]
-                collection = self.embedding_manager.get_or_create_collection(paper_id, str(pdf_path))
+                payload = message.get("payload", {})
+                chunks = payload.get("chunks")
+                collection = self.embedding_manager.get_or_create_collection(
+                    paper_id,
+                    str(pdf_path),
+                    chunks=chunks,
+                )
+                if "chunks" in payload:
+                    # Release chunk references before forwarding to the next stage
+                    payload.pop("chunks", None)
                 if not collection:
                     raise RuntimeError(f"Unable to prepare embedding collection for {paper_id}")
 

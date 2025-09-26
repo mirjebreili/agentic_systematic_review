@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from queue import Queue
 from typing import Dict, List
@@ -41,32 +42,38 @@ def _resolve_pdf_files(paper_list: List[str] | None) -> List[Path]:
     return list(papers_dir.glob("*.pdf"))
 
 
-def _run_pipeline(
-    pdf_files: List[Path],
+def _process_single_pdf(
+    pdf_path: Path,
     fields: List[Dict[str, object]],
+    field_names: List[str],
     excel_handler: ExcelHandler,
     embedding_manager: EmbeddingManager,
     feature_extractor: FeatureExtractor,
-) -> None:
-    """Execute the agent pipeline for a batch of PDFs."""
-    if not pdf_files:
-        logger.warning("No PDF files found in directory: %s", settings.papers_folder)
-        return
-
-    field_names = [field["field_name"] for field in fields]
-    excel_handler.initialize_results_file(settings.results_file, field_names)
-
+) -> List[Dict[str, object]]:
+    """Run the agent pipeline for a single PDF and return summary messages."""
     message_queue: Queue = Queue()
 
-    pdf_agent = PDFAgent(message_queue, pdf_files)
+    pdf_agent = PDFAgent(message_queue, [pdf_path])
     embedding_agent = EmbeddingAgent(message_queue, embedding_manager)
     extraction_agent = ExtractionAgent(message_queue, feature_extractor, fields)
     results_agent = ResultsAgent(message_queue, excel_handler, settings.results_file, field_names)
 
-    pdf_agent.run()
-    embedding_agent.run()
-    extraction_agent.run()
-    results_agent.run()
+    try:
+        pdf_agent.run()
+        embedding_agent.run()
+        extraction_agent.run()
+        results_agent.run()
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.error("Pipeline crashed for %s: %s", pdf_path, exc, exc_info=True)
+        return [
+            {
+                "status": "error",
+                "stage": "results_done",
+                "paper_id": pdf_path.stem,
+                "paper_name": pdf_path.name,
+                "payload": {"error": str(exc)},
+            }
+        ]
 
     summary_messages: List[Dict[str, object]] = []
     while True:
@@ -75,7 +82,76 @@ def _run_pipeline(
             break
         summary_messages.append(message)
 
+    return summary_messages
+
+
+def _chunk_pdfs(pdf_files: List[Path], batch_size: int) -> List[List[Path]]:
+    """Split PDF paths into batches respecting the configured batch size."""
+    batch_size = max(batch_size, 1)
+    return [pdf_files[i : i + batch_size] for i in range(0, len(pdf_files), batch_size)]
+
+
+def _run_pipeline(
+    pdf_files: List[Path],
+    fields: List[Dict[str, object]],
+    excel_handler: ExcelHandler,
+    embedding_manager: EmbeddingManager,
+    feature_extractor: FeatureExtractor,
+) -> None:
+    """Execute the agent pipeline for PDFs in batches with bounded concurrency."""
+    if not pdf_files:
+        logger.warning("No PDF files found in directory: %s", settings.papers_folder)
+        return
+
+    field_names = [field["field_name"] for field in fields]
+    excel_handler.initialize_results_file(settings.results_file, field_names)
+
+    batches = _chunk_pdfs(list(pdf_files), settings.batch_size)
+    total_batches = len(batches)
+
+    summary_messages: List[Dict[str, object]] = []
+
+    for batch_index, batch in enumerate(batches, start=1):
+        logger.info(
+            "Starting batch %d/%d with %d papers", batch_index, total_batches, len(batch)
+        )
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_pdf = {
+                executor.submit(
+                    _process_single_pdf,
+                    pdf_path,
+                    fields,
+                    field_names,
+                    excel_handler,
+                    embedding_manager,
+                    feature_extractor,
+                ): pdf_path
+                for pdf_path in batch
+            }
+
+            for future in as_completed(future_to_pdf):
+                pdf_path = future_to_pdf[future]
+                try:
+                    summary_messages.extend(future.result())
+                except Exception as exc:  # pylint: disable=broad-except
+                    logger.error(
+                        "Unhandled error while processing %s: %s", pdf_path, exc, exc_info=True
+                    )
+                    summary_messages.append(
+                        {
+                            "status": "error",
+                            "stage": "results_done",
+                            "paper_id": pdf_path.stem,
+                            "paper_name": pdf_path.name,
+                            "payload": {"error": str(exc)},
+                        }
+                    )
+
+        logger.info("Completed batch %d/%d", batch_index, total_batches)
+
     for message in summary_messages:
+        if message.get("stage") != "results_done":
+            continue
         paper = message.get("paper_name") or message.get("paper_id")
         if message.get("status") == "success":
             processing_time = message.get("payload", {}).get("processing_time", 0)

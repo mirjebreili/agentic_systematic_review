@@ -1,110 +1,102 @@
-"""
-Main entry point that orchestrates the entire extraction pipeline.
-"""
+"""Main entry point for orchestrating the agent-driven extraction pipeline."""
 
-import logging
-import time
-from pathlib import Path
-from typing import List, Dict, Any
-from tqdm import tqdm
+from __future__ import annotations
+
 import argparse
+import logging
+from pathlib import Path
+from queue import Queue
+from typing import Dict, List
 
-# Import project modules
+from tqdm import tqdm
+
+from agents import EmbeddingAgent, ExtractionAgent, PDFAgent, ResultsAgent
 from config import settings
-from utils import setup_logging, timer_decorator
-from excel_handler import ExcelHandler
-from pdf_processor import PDFProcessor
 from embedding_manager import EmbeddingManager
-from llm_client import LLMClient
+from excel_handler import ExcelHandler
 from feature_extractor import FeatureExtractor
+from llm_client import LLMClient
+from pdf_processor import PDFProcessor
+from utils import setup_logging
 from yaml_handler import YAMLHandler
 
-# Setup logging
+# Configure logging as early as possible.
 setup_logging(settings.log_level, settings.log_file)
 logger = logging.getLogger(__name__)
 
-@timer_decorator
-def process_single_paper(pdf_path: Path, fields: List[Dict[str, Any]], excel_handler: ExcelHandler,
-                         embedding_manager: EmbeddingManager, feature_extractor: FeatureExtractor):
-    """
-    Processes a single PDF paper: embedding, feature extraction, and saving results.
-    """
-    paper_name = pdf_path.name
-    paper_id = pdf_path.stem  # Use filename without extension as unique ID
-    logger.info(f"--- Starting processing for paper: {paper_name} (ID: {paper_id}) ---")
 
-    try:
-        # Get or create the vector collection for the paper. Caching is handled here.
-        paper_collection = embedding_manager.get_or_create_collection(paper_id, str(pdf_path))
-        if not paper_collection:
-            logger.error(f"Could not create or retrieve a vector collection for {paper_name}. Skipping.")
-            return
-
-        # Extract all features from the paper
-        extracted_data = feature_extractor.extract_all_features(paper_collection, fields)
-
-        # Save results progressively
-        processing_time = time.time()  # Will be recalculated by the decorator
-        excel_handler.update_results(settings.results_file, paper_name, extracted_data, processing_time)
-
-        logger.info(f"--- Finished processing for paper: {paper_name} ---")
-
-    except Exception as e:
-        logger.critical(f"A critical error occurred while processing {paper_name}: {e}", exc_info=True)
-        # Optionally save error state to Excel
-        field_names = [field['field_name'] for field in fields]
-        error_data = {feature: {"value": "PROCESSING_ERROR", "confidence": 0, "found": False} for feature in field_names}
-        excel_handler.update_results(settings.results_file, paper_name, error_data, 0)
-
-
-def process_all_papers(fields: List[Dict[str, Any]], excel_handler: ExcelHandler,
-                       embedding_manager: EmbeddingManager, feature_extractor: FeatureExtractor,
-                       force_reprocess: bool, paper_list: List[str] = None):
-    """
-    Scans the papers folder and processes each PDF.
-    """
+def _resolve_pdf_files(paper_list: List[str] | None) -> List[Path]:
+    """Collect and validate the PDF files to process."""
     papers_dir = settings.papers_folder
     if paper_list:
-        pdf_files = [papers_dir / paper for paper in paper_list if (papers_dir / paper).exists()]
-    else:
-        pdf_files = list(papers_dir.glob("*.pdf"))
+        resolved_files: List[Path] = []
+        for paper in paper_list:
+            candidate = papers_dir / paper
+            if candidate.exists():
+                resolved_files.append(candidate)
+            else:
+                logger.warning("Requested paper %s was not found in %s", paper, papers_dir)
+        return resolved_files
 
+    return list(papers_dir.glob("*.pdf"))
+
+
+def _run_pipeline(
+    pdf_files: List[Path],
+    fields: List[Dict[str, object]],
+    excel_handler: ExcelHandler,
+    embedding_manager: EmbeddingManager,
+    feature_extractor: FeatureExtractor,
+) -> None:
+    """Execute the agent pipeline for a batch of PDFs."""
     if not pdf_files:
-        logger.warning(f"No PDF files found in directory: {papers_dir}")
+        logger.warning("No PDF files found in directory: %s", settings.papers_folder)
         return
 
-    logger.info(f"Found {len(pdf_files)} PDF(s) to process.")
-
-    # Initialize results file with headers
-    field_names = [field['field_name'] for field in fields]
+    field_names = [field["field_name"] for field in fields]
     excel_handler.initialize_results_file(settings.results_file, field_names)
 
-    # If force_reprocess is enabled, clear existing collections
-    if force_reprocess:
-        logger.info("Force reprocess enabled. Deleting existing collections for selected papers.")
-        for pdf_path in pdf_files:
-            paper_id = pdf_path.stem
-            embedding_manager.delete_collection(paper_id)
+    message_queue: Queue = Queue()
 
-    for pdf_path in tqdm(pdf_files, desc="Processing Papers"):
-        process_single_paper(pdf_path, fields, excel_handler, embedding_manager, feature_extractor)
+    pdf_agent = PDFAgent(message_queue, pdf_files)
+    embedding_agent = EmbeddingAgent(message_queue, embedding_manager)
+    extraction_agent = ExtractionAgent(message_queue, feature_extractor, fields)
+    results_agent = ResultsAgent(message_queue, excel_handler, settings.results_file, field_names)
 
-def main(args):
-    """
-    Main execution flow.
-    """
+    pdf_agent.run()
+    embedding_agent.run()
+    extraction_agent.run()
+    results_agent.run()
+
+    summary_messages: List[Dict[str, object]] = []
+    while True:
+        message = message_queue.get()
+        if message.get("type") == "sentinel" and message.get("stage") == "results_done":
+            break
+        summary_messages.append(message)
+
+    for message in summary_messages:
+        paper = message.get("paper_name") or message.get("paper_id")
+        if message.get("status") == "success":
+            processing_time = message.get("payload", {}).get("processing_time", 0)
+            logger.info("Successfully processed %s in %.2fs", paper, processing_time)
+        else:
+            error_detail = message.get("payload", {}).get("error", "Unknown error")
+            logger.error("Processing failed for %s: %s", paper, error_detail)
+
+
+def main(args: argparse.Namespace) -> None:
+    """Main execution flow."""
     logger.info("--- Starting PDF Feature Extraction System ---")
 
-    # Override settings with CLI args if provided
     if args.results:
         settings.results_file = Path(args.results)
     if args.papers_folder:
         settings.papers_folder = Path(args.papers_folder)
         if not settings.papers_folder.exists():
-            logger.critical(f"Papers folder specified via CLI does not exist: {settings.papers_folder}")
+            logger.critical("Papers folder specified via CLI does not exist: %s", settings.papers_folder)
             return
 
-    # 1. Initialize handlers and processors
     yaml_handler = YAMLHandler()
     excel_handler = ExcelHandler()
     pdf_processor = PDFProcessor(settings.chunk_size, settings.chunk_overlap)
@@ -113,42 +105,38 @@ def main(args):
     try:
         llm_client = LLMClient(
             provider=settings.llm_provider,
-            base_url=settings.ollama_base_url if settings.llm_provider == 'ollama' else settings.vllm_base_url,
+            base_url=settings.ollama_base_url if settings.llm_provider == "ollama" else settings.vllm_base_url,
             model_name=settings.model_name,
             temperature=settings.temperature,
-            max_tokens=settings.max_tokens
+            max_tokens=settings.max_tokens,
         )
-    except ValueError as e:
-        logger.critical(f"Failed to initialize LLM Client: {e}. Aborting.")
+    except ValueError as exc:
+        logger.critical("Failed to initialize LLM Client: %s. Aborting.", exc)
         return
 
     feature_extractor = FeatureExtractor(embedding_manager, llm_client, settings.top_k_chunks)
 
-    # 2. Load field configurations from YAML
     try:
         fields = yaml_handler.load_fields(settings.fields_config_file)
-    except (FileNotFoundError, ValueError) as e:
-        logger.critical(f"Failed to load or parse fields config file: {e}. Aborting.")
+    except (FileNotFoundError, ValueError) as exc:
+        logger.critical("Failed to load or parse fields config file: %s. Aborting.", exc)
         return
 
-    # 3. Process all papers
-    if not args.dry_run:
-        process_all_papers(
-            fields=fields,
-            excel_handler=excel_handler,
-            embedding_manager=embedding_manager,
-            feature_extractor=feature_extractor,
-            force_reprocess=args.force,
-            paper_list=args.papers
-        )
-    else:
-        logger.info("--- Dry run mode enabled. No results will be saved. ---")
+    pdf_files = _resolve_pdf_files(args.papers)
 
-    # 4. Optional: Clean up resources
+    if args.force:
+        logger.info("Force reprocess enabled. Deleting existing collections for selected papers.")
+        for pdf_path in pdf_files:
+            embedding_manager.delete_collection(pdf_path.stem)
+
+    if args.dry_run:
+        logger.info("--- Dry run mode enabled. No results will be saved. ---")
+    else:
+        _run_pipeline(pdf_files, fields, excel_handler, embedding_manager, feature_extractor)
+
     if args.clear_cache:
         logger.info("Clearing ALL ChromaDB collections as requested.")
-        collections = embedding_manager.list_collections()
-        for collection_name in tqdm(collections, desc="Deleting All Collections"):
+        for collection_name in tqdm(embedding_manager.list_collections(), desc="Deleting All Collections"):
             embedding_manager.delete_collection(collection_name)
 
     logger.info("--- PDF Feature Extraction System Finished ---")
@@ -156,12 +144,32 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Academic Paper Feature Extraction System")
-    parser.add_argument("--papers-folder", type=str, help=f"Directory containing PDF files. Overrides .env setting: {settings.papers_folder}")
-    parser.add_argument("--results", type=str, help=f"Path to save the results Excel/CSV file. Overrides .env setting: {settings.results_file}")
-    parser.add_argument("--papers", nargs='+', help="Process only specific paper filenames from the papers folder.")
-    parser.add_argument("--force", action="store_true", help="Force reprocessing of papers by deleting and rebuilding their vector collections.")
-    parser.add_argument("--dry-run", action="store_true", help="Run the process without saving any results to the Excel file.")
-    parser.add_argument("--clear-cache", action="store_true", help="Clear all cached paper embeddings from ChromaDB after the run.")
+    parser.add_argument(
+        "--papers-folder",
+        type=str,
+        help=f"Directory containing PDF files. Overrides .env setting: {settings.papers_folder}",
+    )
+    parser.add_argument(
+        "--results",
+        type=str,
+        help=f"Path to save the results Excel/CSV file. Overrides .env setting: {settings.results_file}",
+    )
+    parser.add_argument("--papers", nargs="+", help="Process only specific paper filenames from the papers folder.")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force reprocessing of papers by deleting and rebuilding their vector collections.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run the process without saving any results to the Excel file.",
+    )
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Clear all cached paper embeddings from ChromaDB after the run.",
+    )
 
-    cli_args = parser.parse_args()
-    main(cli_args)
+    main(parser.parse_args())
+

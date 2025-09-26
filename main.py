@@ -18,6 +18,7 @@ from excel_handler import ExcelHandler
 from feature_extractor import FeatureExtractor
 from llm_client import LLMClient
 from pdf_processor import PDFProcessor
+from progress_tracker import ProgressTracker
 from utils import setup_logging
 from yaml_handler import YAMLHandler
 
@@ -97,6 +98,8 @@ def _run_pipeline(
     excel_handler: ExcelHandler,
     embedding_manager: EmbeddingManager,
     feature_extractor: FeatureExtractor,
+    progress_tracker: ProgressTracker,
+    skip_processed: bool,
 ) -> None:
     """Execute the agent pipeline for PDFs in batches with bounded concurrency."""
     if not pdf_files:
@@ -112,6 +115,18 @@ def _run_pipeline(
     summary_messages: List[Dict[str, object]] = []
 
     for batch_index, batch in enumerate(batches, start=1):
+        if skip_processed:
+            # Reload progress between batches in case another process has updated it.
+            processed_ids = progress_tracker.refresh().keys()
+            batch = [pdf for pdf in batch if pdf.stem not in processed_ids]
+            if not batch:
+                logger.info(
+                    "Skipping batch %d/%d because all papers were already processed.",
+                    batch_index,
+                    total_batches,
+                )
+                continue
+
         logger.info(
             "Starting batch %d/%d with %d papers", batch_index, total_batches, len(batch)
         )
@@ -132,7 +147,25 @@ def _run_pipeline(
             for future in as_completed(future_to_pdf):
                 pdf_path = future_to_pdf[future]
                 try:
-                    summary_messages.extend(future.result())
+                    messages = future.result()
+                    summary_messages.extend(messages)
+                    final_message = next(
+                        (
+                            message
+                            for message in reversed(messages)
+                            if message.get("stage") == "results_done"
+                        ),
+                        None,
+                    )
+                    if final_message:
+                        status = final_message.get("status", "unknown")
+                        details = final_message.get("payload")
+                        progress_tracker.record(
+                            pdf_path.stem,
+                            pdf_path.name,
+                            status,
+                            details if isinstance(details, dict) else None,
+                        )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(
                         "Unhandled error while processing %s: %s", pdf_path, exc, exc_info=True
@@ -145,6 +178,12 @@ def _run_pipeline(
                             "paper_name": pdf_path.name,
                             "payload": {"error": str(exc)},
                         }
+                    )
+                    progress_tracker.record(
+                        pdf_path.stem,
+                        pdf_path.name,
+                        "error",
+                        {"error": str(exc)},
                     )
 
         logger.info("Completed batch %d/%d", batch_index, total_batches)
@@ -176,7 +215,10 @@ def main(args: argparse.Namespace) -> None:
     yaml_handler = YAMLHandler()
     excel_handler = ExcelHandler()
     pdf_processor = PDFProcessor(settings.chunk_size, settings.chunk_overlap)
-    embedding_manager = EmbeddingManager(settings.chroma_db_path, settings.embedding_model, pdf_processor)
+    embedding_manager = EmbeddingManager(
+        settings.chroma_db_path, settings.embedding_model, pdf_processor
+    )
+    progress_tracker = ProgressTracker(settings.progress_file)
 
     try:
         llm_client = LLMClient(
@@ -204,11 +246,33 @@ def main(args: argparse.Namespace) -> None:
         logger.info("Force reprocess enabled. Deleting existing collections for selected papers.")
         for pdf_path in pdf_files:
             embedding_manager.delete_collection(pdf_path.stem)
+            progress_tracker.remove(pdf_path.stem)
+
+    if not args.force:
+        processed_ids = progress_tracker.get_processed_papers()
+        if processed_ids:
+            original_count = len(pdf_files)
+            pdf_files = [pdf for pdf in pdf_files if pdf.stem not in processed_ids]
+            skipped = original_count - len(pdf_files)
+            if skipped > 0:
+                logger.info(
+                    "Skipping %d papers already recorded in %s.",
+                    skipped,
+                    settings.progress_file,
+                )
 
     if args.dry_run:
         logger.info("--- Dry run mode enabled. No results will be saved. ---")
     else:
-        _run_pipeline(pdf_files, fields, excel_handler, embedding_manager, feature_extractor)
+        _run_pipeline(
+            pdf_files,
+            fields,
+            excel_handler,
+            embedding_manager,
+            feature_extractor,
+            progress_tracker,
+            skip_processed=not args.force,
+        )
 
     if args.clear_cache:
         logger.info("Clearing ALL ChromaDB collections as requested.")
